@@ -34,9 +34,8 @@ export default class Standalone
 
 	setMetadataUrl() {
 		if (import.meta.env.DEV) {
-			return this.requests.setRemote(
-				import.meta.env.VITE_STANDALONE_REMOTE_HOST, { path: import.meta.env.VITE_STANDALONE_REMOTE_PATH }
-			)
+			// Same-origin ? Vite dev proxy ? VITE_STANDALONE_REMOTE_* (see vite.config.js STANDALONE_DEV_PROXY_PREFIX)
+			return this.requests.setRemote(window.location.origin, { path: '/__clockwork-remote/' })
 		}
 
 		if (this.settings.global.metadataPath) {
