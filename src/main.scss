@@ -494,6 +494,40 @@ code {
 .stack-trace {
 	cursor: pointer;
 
+	.stack-trace-line {
+		align-items: center;
+		display: inline-flex;
+		gap: 4px;
+		max-width: 100%;
+	}
+
+	.stack-trace-copy {
+		color: #a6a6a6;
+		cursor: pointer;
+		display: inline-flex;
+		flex-shrink: 0;
+		line-height: 1;
+		opacity: 0.55;
+		padding: 1px;
+
+		&:hover {
+			opacity: 1;
+		}
+
+		@include dark {
+			color: #595959;
+
+			&:hover {
+				color: #696969;
+			}
+		}
+
+		.ui-icon {
+			height: 0.95em;
+			width: 0.95em;
+		}
+	}
+
 	.popover {
 		cursor: default;
 	}
