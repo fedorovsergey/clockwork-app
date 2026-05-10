@@ -455,14 +455,16 @@ export default {
 
 	.requests-container {
 		height: calc(100% - 31px);
-		overflow: auto;
+		overflow-x: hidden;
+		overflow-y: auto;
 		padding: 5px;
 	}
 
 	.requests-content {
 		display: flex;
 		flex-direction: column;
-		min-height: calc(100% + 69px);
+		/* Fill scroll area when content is short (Clear at bottom); no forced overflow when empty */
+		min-height: 100%;
 
 		.content-above {
 			padding-top: 2px;

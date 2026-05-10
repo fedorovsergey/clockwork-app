@@ -13,6 +13,14 @@
 				<a @click="closeUpdateNotification" href="#">Close</a>
 			</span>
 		</div>
+
+		<div class="update-notification monitoring-disabled-notification" v-if="$requests.serviceDisabledNotice">
+			<icon name="alert-triangle"></icon>
+			<span>{{ $requests.serviceDisabledNotice }}</span>
+			<span class="updateNotification-close">
+				<a @click.prevent="dismissMonitoringDisabled" href="#">Dismiss</a>
+			</span>
+		</div>
 	</div>
 </template>
 
@@ -31,6 +39,9 @@ export default {
 		closeUpdateNotification() {
 			this.$updateNotification.ignoreUpdate(this.$requests.remoteUrl)
 			this.updateNotification = false
+		},
+		dismissMonitoringDisabled() {
+			this.$requests.serviceDisabledNotice = null
 		}
 	},
 	watch: {
@@ -94,6 +105,22 @@ export default {
 
 		.updateNotification-close {
 			margin-left: auto;
+		}
+	}
+
+	.monitoring-disabled-notification {
+		background: rgba(#fce8e6, 0.95);
+		color: #8a2c24;
+
+		@include dark {
+			background: rgba(#3d1512, 0.95);
+			color: #ffb4a8;
+		}
+
+		a {
+			color: #8a2c24;
+
+			@include dark { color: #ffb4a8; }
 		}
 	}
 }

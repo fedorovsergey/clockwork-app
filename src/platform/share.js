@@ -50,6 +50,14 @@ export default class Share
 						throw { error: 'requires-authentication', message: data.message, requires: data.requires }
 					} else if (response.status != 200) {
 						throw { error: 'error-response', message: 'Server returned an error response.' }
+					} else if (data?.state === false && data.errors != null) {
+						let message = Array.isArray(data.errors)
+							? data.errors.map(e => String(e)).filter(s => s.trim().length).join('\n')
+							: String(data.errors)
+						if (message.trim().length) {
+							this.requests.serviceDisabledNotice = message
+							throw { error: 'metadata-api-error', message }
+						}
 					} else if (! url.includes('only=') && (! (data instanceof Array) && (! (data instanceof Object) || ! Object.keys(data).length))) {
 						throw { error: 'empty-response', message: 'Server returned an empty metadata.' }
 					}

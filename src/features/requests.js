@@ -8,6 +8,8 @@ export class Requests
 	constructor() {
 		this.settings = null
 
+		this.serviceDisabledNotice = null
+
 		this.items = reactive([])
 
 		this.query = {}
@@ -202,6 +204,8 @@ export class Requests
 		let headers = Object.assign({}, this.remoteHeaders, { 'X-Clockwork-Auth': this.settings.site.authToken })
 
 		return configure(this.client('GET', url, {}, headers).then(data => {
+			this.serviceDisabledNotice = null
+
 			if (! data) return []
 			return ((data instanceof Array) ? data : [ data ]).map(data => createRequest(data))
 		}))
