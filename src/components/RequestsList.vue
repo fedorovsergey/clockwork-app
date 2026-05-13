@@ -137,9 +137,6 @@ export default {
 			return this.requests.find(request => request.databaseDuration > 0)
 		}
 	},
-	mounted() {
-		this.$refs.requestsContainer.scrollTop = this.$refs.requestsTable.offsetTop
-	},
 	methods: {
 		isActive(id) { return this.$request?.id == id },
 		showRequest(request) {
@@ -161,6 +158,9 @@ export default {
 				&& (! this.$request || (this.$settings.global.showIncomingRequests && this.global.showIncomingRequests))
 				&& (! this.$request || ! this.$requests.last()?.isAjax())
 		},
+		scrollRequestsToBottom() {
+			this.$refs.requestsTable.scrollTop = this.$refs.requestsTable.scrollHeight
+		},
 		clear() { this.$requests.clear() }
 	},
 	watch: {
@@ -170,7 +170,7 @@ export default {
 					this.showRequest(this.$requests.first())
 				} else if (this.shouldShowIncomingRequest()) {
 					this.showRequest(this.$requests.last())
-					this.$nextTick(() => this.$refs.requestsContainer.scrollTop = this.$refs.requestsTable.offsetHeight + this.$refs.requestsTable.offsetTop)
+					this.$nextTick(() => this.scrollRequestsToBottom())
 				}
 			}
 		},
@@ -454,19 +454,22 @@ export default {
 	}
 
 	.requests-container {
+		display: flex;
+		flex-direction: column;
 		height: calc(100% - 31px);
 		overflow-x: hidden;
-		overflow-y: auto;
+		overflow-y: hidden;
 		padding: 5px;
 	}
 
 	.requests-content {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
-		/* Fill scroll area when content is short (Clear at bottom); no forced overflow when empty */
-		min-height: 100%;
+		min-height: 0;
 
 		.content-above {
+			flex-shrink: 0;
 			padding-top: 2px;
 
 			.button {
@@ -476,11 +479,16 @@ export default {
 	}
 
 	.requests-table {
-		margin-bottom: auto;
+		flex: 1;
+		margin-bottom: 0;
 		margin-top: 10px;
+		min-height: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
 	}
 
 	.requests-clear {
+		flex-shrink: 0;
 		font-size: 13px;
 		margin-bottom: 5px;
 		margin-top: 5px;
