@@ -64,6 +64,7 @@ export default defineConfig(({ command, mode }) => {
     base: '',
     build: {
       outDir: 'build',
+      chunkSizeWarningLimit: 700,
       sourcemap: mode == 'development' ? 'inline' : false
     },
     plugins: [vue(), svgLoader(), devTools()],
