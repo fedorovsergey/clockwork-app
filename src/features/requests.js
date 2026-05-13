@@ -39,7 +39,7 @@ export class Requests
 		if (placeholder && ! fields) placeholder.loading = true
 
 		return this.withQuery(fields ? { only: fields.join(',') } : {}, () => {
-			return this.load(id, promise => {
+			return this.load({ request: id }, promise => {
 				return promise
 					.then(data => {
 						if (placeholder) {
@@ -61,14 +61,14 @@ export class Requests
 		let request = this.findId(id)
 
 		return this.withQuery(fields ? { only: fields.join(',') } : {}, () => {
-			return this.load(`${id}/extended`, promise => {
+			return this.load({ request: `${id}/extended` }, promise => {
 				return promise.then(data => { return request.resolve(data[0], fields) }).catch(error => {})
 			})
 		})
 	}
 
 	loadLatest(update = true) {
-		return this.load('latest', promise => {
+		return this.load({ request: 'latest' }, promise => {
 			return promise.then(data => {
 				if (update) this.merge(data)
 				return data[0]
@@ -86,7 +86,7 @@ export class Requests
 
 		if (! id) return Promise.resolve([])
 
-		return this.load(`${id}/next` + (count ? `/${count}` : ''), promise => {
+		return this.load({ request: `${id}/next` + (count ? `/${count}` : '') }, promise => {
 			return promise.then(data => {
 				if (update) this.merge(data)
 				return data
@@ -104,7 +104,7 @@ export class Requests
 
 		id = id || this.first(request => ! request.loading).id
 
-		return this.load(`${id}/previous` + (count ? `/${count}` : ''), promise => {
+		return this.load({ request: `${id}/previous` + (count ? `/${count}` : '') }, promise => {
 			return promise.then(data => {
 				if (update) this.merge(data)
 				return data
@@ -197,10 +197,14 @@ export class Requests
 		return promise
 	}
 
-	load(uri, configure, exclusive = false) {
-		if (exclusive) return this.loadExclusive(uri, configure)
+	load(pathQuery, configure, exclusive = false) {
+		if (exclusive) return this.loadExclusive(pathQuery, configure)
 
-		let url = URI(`${this.remoteUrl}${uri}`).addQuery(this.query).toString()
+		return this.executeLoad(pathQuery, configure)
+	}
+
+	executeLoad(pathQuery, configure) {
+		let url = URI(this.remoteUrl).addQuery(pathQuery).addQuery(this.query).toString()
 		let headers = Object.assign({}, this.remoteHeaders, { 'X-Clockwork-Auth': this.settings.site.authToken })
 
 		return configure(this.client('GET', url, {}, headers).then(data => {
@@ -211,10 +215,12 @@ export class Requests
 		}))
 	}
 
-	loadExclusive(uri, configure) {
-		if (this.exclusive[uri]) return this.exclusive[uri]
+	loadExclusive(pathQuery, configure) {
+		let key = Object.keys(pathQuery).sort().map(k => `${k}=${pathQuery[k]}`).join('&')
 
-		return this.exclusive[uri] = this.load(uri, configure).finally(() => this.exclusive[uri] = null)
+		if (this.exclusive[key]) return this.exclusive[key]
+
+		return this.exclusive[key] = this.executeLoad(pathQuery, configure).finally(() => this.exclusive[key] = null)
 	}
 }
 

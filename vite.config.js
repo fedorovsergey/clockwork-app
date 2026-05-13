@@ -18,31 +18,27 @@ function buildDirectRemoteBaseUrl(env) {
 }
 
 /**
- * @param {string} pathWithQuery path from dev server, e.g. /__clockwork-remote/latest?only=id
+ * @param {string} pathWithQuery e.g. /__clockwork-remote?request=latest&only=id
  */
 function rewriteStandaloneProxy(pathWithQuery, env) {
   const [pathPart, clientQuery = ''] = pathWithQuery.split('?', 2)
   if (!pathPart.startsWith(STANDALONE_DEV_PROXY_PREFIX)) return pathWithQuery
 
-  let tail = pathPart.slice(STANDALONE_DEV_PROXY_PREFIX.length)
-  if (!tail) tail = '/'
-  const clockworkUri = tail.startsWith('/') ? tail.slice(1) : tail
-
   const base = buildDirectRemoteBaseUrl(env)
-  const mergedStr = `${base}${clockworkUri}`
-
-  let pathnameSearch
+  let merged
   try {
-    const u = new URL(mergedStr)
-    pathnameSearch = u.pathname + u.search
+    merged = new URL(base)
   } catch {
     return pathWithQuery
   }
 
   if (clientQuery) {
-    pathnameSearch += (pathnameSearch.includes('?') ? '&' : '?') + clientQuery
+    new URLSearchParams(clientQuery).forEach((value, key) => {
+      merged.searchParams.append(key, value)
+    })
   }
-  return pathnameSearch
+    console.log(merged.pathname + merged.search);
+  return merged.pathname + merged.search
 }
 
 // https://vitejs.dev/config/
