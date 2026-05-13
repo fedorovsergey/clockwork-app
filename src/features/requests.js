@@ -12,6 +12,7 @@ export class Requests
 
 		this.items = reactive([])
 
+		this.persistentQuery = {}
 		this.query = {}
 		this.exclusive = {}
 	}
@@ -186,6 +187,10 @@ export class Requests
 		this.query = query
 	}
 
+	setPersistentQuery(query) {
+		this.persistentQuery = query || {}
+	}
+
 	withQuery(query, callback) {
 		let previousQuery = this.query
 		this.query = query
@@ -204,7 +209,7 @@ export class Requests
 	}
 
 	executeLoad(pathQuery, configure) {
-		let url = URI(this.remoteUrl).addQuery(pathQuery).addQuery(this.query).toString()
+		let url = URI(this.remoteUrl).addQuery(this.persistentQuery).addQuery(pathQuery).addQuery(this.query).toString()
 		let headers = Object.assign({}, this.remoteHeaders, { 'X-Clockwork-Auth': this.settings.site.authToken })
 
 		return configure(this.client('GET', url, {}, headers).then(data => {

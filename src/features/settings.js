@@ -75,6 +75,7 @@ export class Settings
 			global: {
 				appearance: 'auto',
 				databasePrettified: false,
+				dnsId: null,
 				editor: null,
 				showIncomingRequests: true,
 				hideCommandTypeRequests: this.platform instanceof Extension,

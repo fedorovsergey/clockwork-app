@@ -33,8 +33,10 @@ export default class Standalone
 	}
 
 	setMetadataUrl() {
+		this.requests.setPersistentQuery(this.resolveMetadataQuery())
+
 		if (import.meta.env.DEV) {
-			// Same-origin ? Vite dev proxy ? VITE_STANDALONE_REMOTE_* (see vite.config.js STANDALONE_DEV_PROXY_PREFIX)
+			// Same-origin -> Vite dev proxy -> VITE_STANDALONE_REMOTE_* (see vite.config.js STANDALONE_DEV_PROXY_PREFIX)
 			return this.requests.setRemote(window.location.origin, { path: '/__clockwork-remote/' })
 		}
 
@@ -48,6 +50,12 @@ export default class Standalone
 			window.location.href,
 			{ path: (new URI(window.location.href)).path().split('/').slice(0, -2).join('/') + '/__clockwork/' }
 		)
+	}
+
+	resolveMetadataQuery() {
+		let dnsId = this.settings.global.dnsId
+
+		return dnsId ? { DNSID: dnsId } : {}
 	}
 
 	setMetadataClient() {
@@ -173,8 +181,6 @@ export default class Standalone
 	}
 
 	settingsChanged() {
-		if (this.settings.global.metadataPath) {
-			this.setMetadataUrl()
-		}
+		this.setMetadataUrl()
 	}
 }

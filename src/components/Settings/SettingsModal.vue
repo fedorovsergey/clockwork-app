@@ -114,6 +114,18 @@
 			</div>
 
 			<div class="controls-group" v-if="showAdvancedSettings">
+				<label for="settings-dns-id">DNSID</label>
+
+				<div class="controls">
+					<input type="text" id="settings-dns-id" name="settings-dns-id" placeholder="DNSID" v-model="$settings.global.dnsId" @change="save">
+
+					<div class="help-text">
+						Passed as a visible query parameter in standalone development proxy requests.
+					</div>
+				</div>
+			</div>
+
+			<div class="controls-group" v-if="showAdvancedSettings">
 				<label for="settings-on-demand-secret">Sharing URL</label>
 
 				<div class="controls">

@@ -14,6 +14,7 @@ function buildDirectRemoteBaseUrl(env) {
   const [pathname, query] = pathOpt.split('?')
   url.pathname(pathname || '')
   url.query(query || '')
+  url.removeQuery('DNSID')
   return url.toString()
 }
 
@@ -34,10 +35,10 @@ function rewriteStandaloneProxy(pathWithQuery, env) {
 
   if (clientQuery) {
     new URLSearchParams(clientQuery).forEach((value, key) => {
+      if (merged.searchParams.getAll(key).includes(value)) return
       merged.searchParams.append(key, value)
     })
   }
-    console.log(merged.pathname + merged.search);
   return merged.pathname + merged.search
 }
 
