@@ -63,6 +63,11 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: '',
+    test: {
+      environment: 'happy-dom',
+      setupFiles: ['./tests/setup.js'],
+      include: ['tests/**/*.{test,spec}.js']
+    },
     build: {
       outDir: 'build',
       chunkSizeWarningLimit: 700,
