@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<details-table title="Profiler" icon="clock" :columns="['Self', 'Inclusive', 'Function']" :items="$profiler.functions" :filter="filter" :per-page="100" class="profiler">
+		<details-table title="Profiler" icon="clock" :columns="['Self', 'Inclusive', 'Calls', 'Function']" :items="$profiler.functions" :filter="filter" :per-page="100" class="profiler">
 			<template v-slot:toolbar="{ filter }">
 				<div class="header-group">
 					<label class="header-toggle">
@@ -42,6 +42,7 @@
 				<tr v-for="item, index in filterXdebug(items)" :key="`${$request.id}-${index}`" v-if="$profiler.ready">
 					<td class="profiler-metric">{{$profiler.formatMetric(item.self)}}</td>
 					<td class="profiler-metric">{{$profiler.formatMetric(item.inclusive)}}</td>
+					<td class="profiler-metric">{{item.calls}}</td>
 					<td class="profiler-function">
 						<div class="profiler-function-name">
 							{{item.name}}
@@ -53,7 +54,7 @@
 				</tr>
 
 				<tr v-if="$profiler.loading || $profiler.parsing">
-					<td colspan="3">
+					<td colspan="4">
 						<div class="profiler-content">
 							<spinner :color="$settings.appearance == 'dark' ? '#f27e02' : '#258cdb'"></spinner>
 
@@ -65,7 +66,7 @@
 				</tr>
 
 				<tr v-if="$profiler.invalid">
-					<td colspan="3">
+					<td colspan="4">
 						<div class="profiler-content">
 							<h1>
 								Profile contains invalid data.
@@ -80,7 +81,7 @@
 				</tr>
 
 				<tr v-if="! $profiler.available">
-					<td colspan="3">
+					<td colspan="4">
 						<div class="profiler-content">
 							<h1>
 								Profile is not present for current request.
@@ -122,7 +123,8 @@ export default {
 				{ tag: 'model' },
 				{ tag: 'file', map: item => item.shortPath },
 				{ tag: 'self', type: 'number' },
-				{ tag: 'inclusive', type: 'number' }
+				{ tag: 'inclusive', type: 'number' },
+				{ tag: 'calls', type: 'number' }
 			], item => item.name)
 			filter.sortedBy = 'self'
 			filter.sortedDesc = true

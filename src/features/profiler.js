@@ -134,6 +134,7 @@ export class Profiler
 			.map(fn => {
 				fn.self = this.percentual ? fn.selfAll[this.metric] / this.summary[this.metric] * 100 : fn.selfAll[this.metric]
 				fn.inclusive = this.percentual ? fn.inclusiveAll[this.metric] / this.summary[this.metric] * 100 : fn.inclusiveAll[this.metric]
+				fn.calls = fn.invocations
 				return fn
 			})
 	}
