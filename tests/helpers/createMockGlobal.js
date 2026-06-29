@@ -22,6 +22,7 @@ export function createMockSettings(overrides = {}) {
 			hideCommandTypeRequests: false,
 			hideQueueJobTypeRequests: false,
 			hideTestTypeRequests: false,
+			ignorePaths: [],
 			...(overrides.global || {})
 		},
 		site: {

@@ -13,6 +13,7 @@
 						<th class="duration">
 							Time<br><small v-if="showDatabaseTime">Database</small>
 						</th>
+						<th class="ignore"></th>
 					</tr>
 				</thead>
 			</table>
@@ -94,6 +95,11 @@
 								{{request.responseDurationRounded}} ms<br>
 								<small v-if="showDatabaseTime">{{request.databaseDurationRounded}} ms</small>
 							</td>
+							<td class="ignore-cell">
+								<a href="#" class="ignore-button" @click.prevent.stop="ignoreRequest(request)" title="Исключить этот путь">
+									<icon name="x"></icon>
+								</a>
+							</td>
 						</tr>
 					</table>
 				</div>
@@ -130,6 +136,21 @@ export default {
 				requests = requests.filter(request => request.type != 'test')
 			}
 
+			if (this.$settings.global.ignorePaths?.length) {
+				requests = requests.filter(request => {
+					if (! request.uri) return true
+					return ! this.$settings.global.ignorePaths.some(pattern => {
+						if (pattern.startsWith('/') && pattern.endsWith('/')) {
+							return new RegExp(pattern.slice(1, -1)).test(request.uri)
+						}
+						if (pattern.includes('url=')) {
+							return request.uri.includes(pattern)
+						}
+						return request.uri === pattern || request.uri.startsWith(pattern)
+					})
+				})
+			}
+
 			return requests
 		},
 
@@ -161,7 +182,33 @@ export default {
 		scrollRequestsToBottom() {
 			this.$refs.requestsTable.scrollTop = this.$refs.requestsTable.scrollHeight
 		},
-		clear() { this.$requests.clear() }
+		clear() { this.$requests.clear() },
+
+		ignoreRequest(request) {
+			let path = request.uri
+
+			if (path.includes('.php')) {
+				// strip query string for .php files
+				path = path.split('?')[0]
+			} else if (path.includes('url=')) {
+				// extract only the url= parameter value (up to & or end)
+				const urlMatch = path.match(/url=[^&]+/)
+				if (urlMatch) {
+					path = urlMatch[0]
+				}
+			} else {
+				// strip the last path segment for other non-query URIs
+				const lastSlash = path.lastIndexOf('/')
+				if (lastSlash > 0) {
+					path = path.slice(0, lastSlash + 1)
+				}
+			}
+
+			if (! this.$settings.global.ignorePaths.includes(path)) {
+				this.$settings.global.ignorePaths.push(path)
+				this.$settings.save()
+			}
+		}
 	},
 	watch: {
 		'requests.length': {
@@ -339,6 +386,43 @@ export default {
 	.duration {
 		text-align: right;
 		width: 68px;
+	}
+
+	.ignore {
+		width: 24px;
+	}
+
+	.ignore-cell {
+		padding: 0;
+		text-align: center;
+		width: 24px;
+	}
+
+	.ignore-button {
+		color: #bbb;
+		display: inline-block;
+		font-size: 14px;
+		line-height: 1;
+		opacity: 0;
+		padding: 4px;
+		text-decoration: none;
+		transition: opacity 0.15s;
+
+		@include dark {
+			color: #555;
+		}
+	}
+
+	tr:hover .ignore-button {
+		opacity: 1;
+	}
+
+	.ignore-button:hover {
+		color: #c51f24;
+
+		@include dark {
+			color: #ed797a;
+		}
 	}
 
 	.type-text {

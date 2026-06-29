@@ -92,6 +92,7 @@ export class Settings
 					session: false, arguments: false, options: false, payload: false, queue: false, connection: false,
 					asserts: false
 				},
+				ignorePaths: [],
 				seenReleaseNotesVersion: null,
 				shareTermsAccepted: false,
 				timelineCondensed: { performance: true, views: false },

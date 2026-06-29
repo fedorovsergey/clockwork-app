@@ -113,6 +113,28 @@
 				</div>
 			</div>
 
+			<div class="controls-group" v-if="$platform.hasFeature('requests-list')">
+				<label for="settings-ignore-paths">Ignored paths</label>
+
+				<div class="controls">
+					<div class="controls-input-vgroup">
+						<div class="ignored-paths-tags" v-if="$settings.global.ignorePaths?.length">
+							<span class="ignored-path-tag" v-for="(path, index) in $settings.global.ignorePaths" :key="path">
+								<span class="ignored-path-tag-text">{{path}}</span>
+								<a href="#" class="ignored-path-tag-remove" @click.prevent="removeIgnoredPath(index)" title="Remove">
+									<icon name="x"></icon>
+								</a>
+							</span>
+						</div>
+						<input type="text" id="settings-ignore-paths" placeholder="/path/to/ignore" v-model="newIgnorePath" @keydown.enter.prevent="addIgnoredPath">
+					</div>
+
+					<div class="help-text">
+						Requests with matching URI will be hidden from the list. Supports exact path, prefix, or regex (<code>/pattern/</code>).
+					</div>
+				</div>
+			</div>
+
 			<div class="controls-group" v-if="showAdvancedSettings">
 				<label for="settings-dns-id">DNSID</label>
 
@@ -160,7 +182,8 @@ export default {
 	components: { Modal },
 	data: () => ({
 		showPersistWarning: false,
-		showAdvancedSettings: false
+		showAdvancedSettings: false,
+		newIgnorePath: ''
 	}),
 	methods: {
 		setAppearance(appearance) {
@@ -176,6 +199,20 @@ export default {
 		showCredits() {
 			this.$settings.toggle()
 			this.$credits.toggle()
+		},
+
+		removeIgnoredPath(index) {
+			this.$settings.global.ignorePaths.splice(index, 1)
+			this.save()
+		},
+
+		addIgnoredPath() {
+			const path = this.newIgnorePath.trim()
+			if (path && ! this.$settings.global.ignorePaths.includes(path)) {
+				this.$settings.global.ignorePaths.push(path)
+				this.save()
+			}
+			this.newIgnorePath = ''
 		},
 
 		closed() {
@@ -272,6 +309,68 @@ export default {
 
 		&:last-child {
 			margin: 0;
+		}
+	}
+
+	.ignored-paths-tags {
+		align-items: center;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px 4px 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		padding: 4px 6px;
+
+		@include dark {
+			background: rgb(63, 62, 61);
+			border-color: rgb(93, 92, 91);
+		}
+
+		& + input {
+			border-radius: 0 0 4px 4px;
+			margin-top: -2px;
+		}
+	}
+
+	.ignored-path-tag {
+		align-items: center;
+		background: #e8e8e8;
+		border-radius: 3px;
+		display: inline-flex;
+		font-family: monospace;
+		font-size: 12px;
+		padding: 2px 6px;
+
+		@include dark {
+			background: #3a3a3a;
+		}
+	}
+
+	.ignored-path-tag-text {
+		max-width: 300px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.ignored-path-tag-remove {
+		color: #999;
+		flex-shrink: 0;
+		margin-left: 4px;
+		padding: 1px;
+		text-decoration: none;
+
+		&:hover {
+			color: #c51f24;
+		}
+
+		@include dark {
+			color: #666;
+
+			&:hover {
+				color: #ed797a;
+			}
 		}
 	}
 
