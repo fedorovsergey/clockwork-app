@@ -227,15 +227,13 @@ export class Request
 		this.databaseSlowQueries = parseInt(this.databaseSlowQueries)
 			|| this.databaseQueries.filter(query => query.tags.includes('slow')).length
 		this.databaseSelects = parseInt(this.databaseSelects)
-			|| this.databaseQueries.filter(query => query.query.match(/^select /i)).length
+			|| this.databaseQueries.filter(query => query.type === 'select').length
 		this.databaseInserts = parseInt(this.databaseInserts)
-			|| this.databaseQueries.filter(query => query.query.match(/^insert /i)).length
+			|| this.databaseQueries.filter(query => query.type === 'insert').length
 		this.databaseUpdates = parseInt(this.databaseUpdates)
-			|| this.databaseQueries.filter(query => query.query.match(/^update /i)).length
+			|| this.databaseQueries.filter(query => query.type === 'update').length
 		this.databaseDeletes = parseInt(this.databaseDeletes)
-			|| this.databaseQueries.filter(query => query.query.match(/^delete /i)).length
-		this.databaseOthers = parseInt(this.databaseOthers)
-			|| this.databaseQueries.filter(query => ! query.query.match(/^(select|insert|update|delete) /i)).length
+			|| this.databaseQueries.filter(query => query.type === 'delete').length
 
 		this.databaseDuration = parseFloat(this.databaseDuration || 0)
 	}
@@ -252,16 +250,28 @@ export class Request
 
 			let match, sql = query.query.trim()
 
+			// strip prefix like "DB\Postgres\QueryBuilder\AtomicUpsert query: {"
+			// by finding the actual SQL keyword
+			let sqlStart = sql.match(/\b(SELECT|INSERT|UPDATE|DELETE|BEGIN|COMMIT|ROLLBACK|CREATE|ALTER|DROP|TRUNCATE|EXPLAIN|WITH|SHOW|DESCRIBE|SET|CALL|EXECUTE)\b/i)
+			if (sqlStart && sqlStart.index > 0) {
+				sql = sql.slice(sqlStart.index)
+			}
+
 			if (match = sql.match(/^SELECT\s[\s\S]*?\sFROM\s+([A-Za-z-_'".]+)/i)) {
 				query.shortQuery = `SELECT FROM ${match[1].replaceAll(/['"]/g, '')}`
+				query.type = 'select'
 			} else if (match = sql.match(/^INSERT\s+INTO\s+([A-Za-z-_'".]+)/i)) {
 				query.shortQuery = `INSERT INTO ${match[1].replaceAll(/['"]/g, '')}`
+				query.type = 'insert'
 			} else if (match = sql.match(/^UPDATE\s+([A-Za-z-_'".]+)/i)) {
 				query.shortQuery = `UPDATE ${match[1].replaceAll(/['"]/g, '')}`
+				query.type = 'update'
 			} else if (match = sql.match(/^DELETE\s+FROM\s+([A-Za-z-_'".]+)/i)) {
 				query.shortQuery = `DELETE FROM ${match[1].replaceAll(/['"]/g, '')}`
+				query.type = 'delete'
 			} else {
 				query.shortQuery = sql
+				query.type = 'select'
 			}
 
 			return query

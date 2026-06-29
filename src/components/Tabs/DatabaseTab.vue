@@ -1,7 +1,7 @@
 <template>
 	<div v-if="active">
 		<div class="counters-row">
-			<div class="counter">
+			<div class="counter" :class="{ active: queryTypeFilter === null }" @click="queryTypeFilter = null">
 				<div class="counter-value">{{$request.databaseQueriesCount}}</div>
 				<div class="counter-title">queries</div>
 			</div>
@@ -9,25 +9,21 @@
 				<div class="counter-value">{{$request.databaseSlowQueries}}</div>
 				<div class="counter-title has-mark">slow</div>
 			</div>
-			<div class="counter" v-if="$request.databaseSelects">
+			<div class="counter" :class="{ active: queryTypeFilter === 'select' }" @click="queryTypeFilter = 'select'" v-if="$request.databaseSelects">
 				<div class="counter-value">{{$request.databaseSelects}}</div>
 				<div class="counter-title">selects</div>
 			</div>
-			<div class="counter" v-if="$request.databaseInserts">
+			<div class="counter" :class="{ active: queryTypeFilter === 'insert' }" @click="queryTypeFilter = 'insert'" v-if="$request.databaseInserts">
 				<div class="counter-value">{{$request.databaseInserts}}</div>
 				<div class="counter-title">inserts</div>
 			</div>
-			<div class="counter" v-if="$request.databaseUpdates">
+			<div class="counter" :class="{ active: queryTypeFilter === 'update' }" @click="queryTypeFilter = 'update'" v-if="$request.databaseUpdates">
 				<div class="counter-value">{{$request.databaseUpdates}}</div>
 				<div class="counter-title">updates</div>
 			</div>
-			<div class="counter" v-if="$request.databaseDeletes">
+			<div class="counter" :class="{ active: queryTypeFilter === 'delete' }" @click="queryTypeFilter = 'delete'" v-if="$request.databaseDeletes">
 				<div class="counter-value">{{$request.databaseDeletes}}</div>
 				<div class="counter-title">deletes</div>
-			</div>
-			<div class="counter" v-if="$request.databaseOthers">
-				<div class="counter-value">{{$request.databaseOthers}}</div>
-				<div class="counter-title">other</div>
 			</div>
 			<div class="counter">
 				<div class="counter-value">{{$request.databaseDurationRounded}}&nbsp;ms</div>
@@ -35,7 +31,7 @@
 			</div>
 		</div>
 
-		<details-table title="Queries" icon="database" :columns="columns" :items="$request.databaseQueries" :filter="filter" filter-example="where request_id model:request type:select file:Controller.php duration:&gt;100" v-if="$request.databaseQueries.length">
+		<details-table title="Queries" icon="database" :columns="columns" :items="filteredItems" :filter="filter" filter-example="where request_id model:request type:select file:Controller.php duration:&gt;100" v-if="$request.databaseQueries.length">
 			<template v-slot:toolbar="{ filter }">
 				<div class="header-group">
 					<label class="header-toggle">
@@ -92,6 +88,7 @@ export default {
 	props: [ 'active' ],
 	data: () => ({
 		prettify: false,
+		queryTypeFilter: null,
 		filter: createFilter([
 			{ tag: 'model' },
 			{ tag: 'type', apply: (item, tagValue) => {
@@ -104,6 +101,11 @@ export default {
 		])
 	}),
 	computed: {
+		filteredItems() {
+			if (this.queryTypeFilter === null) return this.$request.databaseQueries
+
+			return this.$request.databaseQueries.filter(item => item.type === this.queryTypeFilter)
+		},
 		columns() {
 			let columns = [ 'Model', 'Query', 'Duration' ]
 
@@ -131,6 +133,17 @@ export default {
 
 <style lang="scss">
 @use '../../mixins' as *;
+
+.counter {
+	cursor: pointer;
+	user-select: none;
+
+	&.active {
+		background: var(--accent-color, hsl(210deg 100% 50%));
+		color: #fff;
+		border-radius: 4px;
+	}
+}
 
 .counter.database-slow-query {
 	.has-mark:before {
