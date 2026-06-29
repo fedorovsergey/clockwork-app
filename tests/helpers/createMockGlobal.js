@@ -91,6 +91,7 @@ export function createMockGlobal(overrides = {}) {
 		$request: overrides.$request !== undefined
 			? overrides.$request
 			: createRequest(httpRequest),
+		$round: (value, precision = 0) => parseFloat(parseFloat(value).toFixed(precision)),
 		activeDetailsTab: overrides.activeDetailsTab || 'performance',
 		showIncomingRequests: overrides.showIncomingRequests !== undefined
 			? overrides.showIncomingRequests
