@@ -1,10 +1,11 @@
 <template>
 	<div v-if="active">
-		<details-table title="Messages" icon="edit-2" :columns="['Time', 'Level', 'Message']" :items="log" :filter="filter" filter-example="query failed level:error file:Controller.php time:>13:08:29">
+		<details-table title="Messages" icon="edit-2" :columns="columns" :items="log" :filter="filter" filter-example="query failed level:error file:Controller.php time:>13:08:29">
 			<template v-slot:body="{ items }">
 				<tr v-for="message, index in items" :class="{ 'log-row': true, 'error': ['emergency', 'alert', 'critical', 'error'].includes(message.level), warning: message.level == 'warning' }" :key="`${$request.id}-${index}`">
 					<td class="log-date">{{$date(message.time, 'HH:mm:ss')}}</td>
 					<td class="log-level">{{message.level}}</td>
+					<td class="log-logger" v-if="columns.includes('Logger')">{{message.context?.logger_name || ''}}</td>
 					<td>
 						<div class="log-message">
 							<div class="log-message-content">
@@ -46,7 +47,13 @@ export default {
 		], item => item.message)
 	}),
 	computed: {
-		log() { return this.$request.log.filter(message => ! message.context?.performance) }
+		log() { return this.$request.log.filter(message => ! message.context?.performance) },
+		columns() {
+			let columns = ['Time', 'Level', 'Message']
+			let hasLoggerName = this.$request.log.some(message => message.context?.logger_name)
+			if (hasLoggerName) columns.splice(2, 0, 'Logger')
+			return columns
+		}
 	},
 	methods: {
 		showPreviousException(message) {
@@ -125,7 +132,7 @@ export default {
 		}
 	}
 
-	.log-date, .log-level {
+	.log-date, .log-level, .log-logger {
 		width: 70px;
 	}
 
