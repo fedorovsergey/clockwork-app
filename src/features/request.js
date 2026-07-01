@@ -394,6 +394,11 @@ export class Request
 				message.trace = message.exception.trace
 			}
 
+			if (message.context?.logger_name) {
+				message.logger_name = message.context.logger_name
+				delete message.context.logger_name
+			}
+
 			message.time = new Date(message.time * 1000)
 			message.context = message.context instanceof Object && Object.keys(message.context).filter(key => key != '__type__').length ? message.context : undefined
 

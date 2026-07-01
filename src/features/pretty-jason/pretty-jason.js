@@ -27,23 +27,35 @@ export default class PrettyJason
 	generateHtml() {
 		let [ value, valueType ] = this.resolveValueAndType(this.data)
 
-		return this.createElement('ul', { class: 'pretty-jason' }, [
+		let ownKeys = this.getOwnKeys(this.data)
+		let isArray = this.data instanceof Object && this.data.__type__ == 'array'
+		let isSmallArray = isArray && ownKeys.length < 5
+
+		let list = this.createElement('ul', { class: 'pretty-jason' }, [
 			this.createElement('li', {}, [
-				this.createElement('span', {
+				isSmallArray ? this.createElement('span', {}, [
+					this.createElement('span', { class: 'pretty-jason-key', text: `${value} ` })
+				]) : this.createElement('span', {
 					data: { rendered: true },
 					click: ev => this.objectNodeClickedCallback(ev)
 				}, [
-					this.createElement('span', { class: 'pretty-jason-icon', html: '<i class="pretty-jason-icon-closed"></i>' }),
+					this.createElement('span', { class: 'pretty-jason-icon', html: `<i class="${isSmallArray ? 'pretty-jason-icon-open' : 'pretty-jason-icon-closed'}"></i>` }),
 					this.createElement('span', { text: `${value} ` })
 				]),
-				this.generateHtmlPreview(this.data),
-				this.generateHtmlNode(this.data)
+				isSmallArray ? undefined : this.generateHtmlPreview(this.data),
+				this.generateHtmlNode(this.data, isSmallArray)
 			])
 		])
+
+		return list
 	}
 
-	generateHtmlNode(data) {
-		return this.createElement('ul', { style: { display: 'none' } }, Object.keys(data)
+	getOwnKeys(data) {
+		return Object.keys(data).filter(key => ! [ '__class__', '__type__', '__hash__' ].includes(key))
+	}
+
+	generateHtmlNode(data, expanded = false) {
+		return this.createElement('ul', { style: { display: expanded ? 'block' : 'none' } }, Object.keys(data)
 			.filter(key => ! [ '__class__', '__type__', '__hash__' ].includes(key))
 			.map(key => {
 				let [ value, valueType ] = this.resolveValueAndType(data[key])
@@ -98,7 +110,7 @@ export default class PrettyJason
 			return [ `"${value}"`, 'string' ]
 		} else if (typeof value == 'object') {
 			if (value.__type__ == 'array') {
-				return [ `Array(${Object.values(value).length - 1})`, 'object' ]
+				return [ '', 'object' ]
 			} else if (value.__type__ && value.__type__ != 'object') {
 				return [ value.__type__, value.__type__.replace(' ', '-') ]
 			} else {
@@ -205,7 +217,7 @@ export default class PrettyJason
 
 		if (options.click) element.addEventListener('click', options.click)
 
-		if (children instanceof Array) children.forEach(child => element.append(child))
+		if (children instanceof Array) children.forEach(child => { if (child != null) element.append(child) })
 
 		return element
 	}

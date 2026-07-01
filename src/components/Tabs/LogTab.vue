@@ -24,9 +24,9 @@
 					<td class="log-date">{{$date(message.time, 'HH:mm:ss')}}</td>
 					<td class="log-level">{{message.level}}</td>
 					<td class="log-logger" v-if="columns.includes('Logger')">
-						<span v-if="message.context?.logger_name">
-							{{message.context.logger_name}}
-							<a href="#" class="log-logger-hide" @click.prevent="hideLogger(message.context.logger_name)" title="Hide">✕</a>
+						<span v-if="message.logger_name">
+							{{message.logger_name}}
+							<a href="#" class="log-logger-hide" @click.prevent="hideLogger(message.logger_name)" title="Hide">✕</a>
 						</span>
 					</td>
 					<td>
@@ -77,14 +77,14 @@ export default {
 			let messages = this.$request.log.filter(message => ! message.context?.performance)
 
 			if (this.hiddenLoggers.length) {
-				messages = messages.filter(message => ! this.hiddenLoggers.includes(message.context?.logger_name))
+				messages = messages.filter(message => ! this.hiddenLoggers.includes(message.logger_name))
 			}
 
 			return messages
 		},
 		columns() {
 			let columns = ['Time', 'Level', 'Message']
-			let hasLoggerName = this.$request.log.some(message => message.context?.logger_name)
+			let hasLoggerName = this.$request.log.some(message => message.logger_name)
 			if (hasLoggerName) columns.splice(2, 0, 'Logger')
 			return columns
 		}
