@@ -60,6 +60,7 @@
 								<div class="database-query-bindings" v-if="query.bindings">
 									<pretty-print :data="query.bindings"></pretty-print>
 								</div>
+								<a href="#" class="database-query-copy" @click.prevent="copySqlWithBindings(query)" title="Copy SQL with bindings">📋</a>
 							</div>
 							<stack-trace class="database-query-path" :trace="query.trace" :file="query.file" :line="query.line"></stack-trace>
 						</div>
@@ -127,6 +128,52 @@ export default {
 	},
 	mounted() {
 		this.prettify = this.$settings.global.databasePrettified || false
+	},
+	methods: {
+		copySqlWithBindings(query) {
+			let sql = query.query
+			let bindings = query.bindings
+
+			if (bindings) {
+				let keys = Object.keys(bindings).filter(key => key != '__type__')
+
+				if (keys.length) {
+					// positional placeholders (?)
+					if (keys.every(k => /^\d+$/.test(k))) {
+						let values = keys.map(k => bindings[k])
+						let i = 0
+						sql = sql.replace(/\?/g, () => {
+							let value = values[i++]
+							// check if this ? is inside ANY(...)
+							let match = sql.match(/ANY\(\?/)
+							if (match) {
+								// collect remaining values for the array
+								let remaining = values.slice(i - 1)
+								i = values.length
+								return '{' + remaining.map(v => this.formatBindingValue(v, true)).join(',') + '}'
+							}
+							return this.formatBindingValue(value)
+						})
+					} else {
+						// named placeholders (:user_id)
+						keys.forEach(key => {
+							let placeholder = key.startsWith(':') ? key : `:${key}`
+							let value = this.formatBindingValue(bindings[key])
+							sql = sql.split(placeholder).join(value)
+						})
+					}
+				}
+			}
+
+			navigator.clipboard.writeText(sql)
+		},
+		formatBindingValue(value, insideArray = false) {
+			if (value === null) return 'NULL'
+			if (typeof value === 'boolean') return value ? '1' : '0'
+			if (typeof value === 'number') return String(value)
+			if (insideArray) return String(value)
+			return `'${String(value).replace(/'/g, "\\'")}'`
+		}
 	}
 }
 </script>
@@ -173,6 +220,23 @@ export default {
 
 	.database-query-bindings {
 		margin-top: 2px;
+	}
+
+	.database-query-copy {
+		color: #aaa;
+		font-size: 13px;
+		margin-left: 4px;
+		opacity: 0.4;
+		text-decoration: none;
+		vertical-align: top;
+
+		&:hover {
+			opacity: 1;
+		}
+
+		@include dark {
+			color: #777;
+		}
 	}
 }
 </style>

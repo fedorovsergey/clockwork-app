@@ -131,3 +131,120 @@ describe('DatabaseTab', () => {
 		expect(wrapper.findAll('.counter')[0].classes()).not.toContain('active')
 	})
 })
+
+describe('DatabaseTab — copySqlWithBindings', () => {
+	it('replaces positional placeholders (?) with quoted values', () => {
+		const request = createRequestWithQueries([
+			{ query: 'SELECT * FROM users WHERE id = ? AND status = ?', duration: 1, bindings: { '1': 42, '2': 'active' }, tags: [] }
+		])
+
+		const global = createMockGlobal({ $request: request })
+		const { wrapper } = mountWithGlobal(DatabaseTab, {
+			global,
+			props: { active: true },
+			stubs
+		})
+
+		let clipboardText = ''
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: (text) => { clipboardText = text } },
+			writable: true
+		})
+
+		wrapper.vm.copySqlWithBindings(request.databaseQueries[0])
+
+		expect(clipboardText).toBe("SELECT * FROM users WHERE id = 42 AND status = 'active'")
+	})
+
+	it('replaces named placeholders (:user_id)', () => {
+		const request = createRequestWithQueries([
+			{ query: 'SELECT * FROM users WHERE id = :user_id AND status = :status', duration: 1, bindings: { ':user_id': 7, ':status': 'inactive' }, tags: [] }
+		])
+
+		const global = createMockGlobal({ $request: request })
+		const { wrapper } = mountWithGlobal(DatabaseTab, {
+			global,
+			props: { active: true },
+			stubs
+		})
+
+		let clipboardText = ''
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: (text) => { clipboardText = text } },
+			writable: true
+		})
+
+		wrapper.vm.copySqlWithBindings(request.databaseQueries[0])
+
+		expect(clipboardText).toBe("SELECT * FROM users WHERE id = 7 AND status = 'inactive'")
+	})
+
+	it('handles ANY(?) with array values', () => {
+		const request = createRequestWithQueries([
+			{ query: 'SELECT * FROM files WHERE name = ANY(?) AND deleted = 0', duration: 1, bindings: { '1': 'doc1.pdf', '2': 'doc2.pdf' }, tags: [] }
+		])
+
+		const global = createMockGlobal({ $request: request })
+		const { wrapper } = mountWithGlobal(DatabaseTab, {
+			global,
+			props: { active: true },
+			stubs
+		})
+
+		let clipboardText = ''
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: (text) => { clipboardText = text } },
+			writable: true
+		})
+
+		wrapper.vm.copySqlWithBindings(request.databaseQueries[0])
+
+		expect(clipboardText).toBe("SELECT * FROM files WHERE name = ANY({doc1.pdf,doc2.pdf}) AND deleted = 0")
+	})
+
+	it('handles null and boolean bindings', () => {
+		const request = createRequestWithQueries([
+			{ query: 'SELECT * FROM users WHERE deleted = ? AND active = ?', duration: 1, bindings: { '1': false, '2': null }, tags: [] }
+		])
+
+		const global = createMockGlobal({ $request: request })
+		const { wrapper } = mountWithGlobal(DatabaseTab, {
+			global,
+			props: { active: true },
+			stubs
+		})
+
+		let clipboardText = ''
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: (text) => { clipboardText = text } },
+			writable: true
+		})
+
+		wrapper.vm.copySqlWithBindings(request.databaseQueries[0])
+
+		expect(clipboardText).toBe('SELECT * FROM users WHERE deleted = 0 AND active = NULL')
+	})
+
+	it('handles query without bindings', () => {
+		const request = createRequestWithQueries([
+			{ query: 'SELECT * FROM users', duration: 1, tags: [] }
+		])
+
+		const global = createMockGlobal({ $request: request })
+		const { wrapper } = mountWithGlobal(DatabaseTab, {
+			global,
+			props: { active: true },
+			stubs
+		})
+
+		let clipboardText = ''
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: (text) => { clipboardText = text } },
+			writable: true
+		})
+
+		wrapper.vm.copySqlWithBindings(request.databaseQueries[0])
+
+		expect(clipboardText).toBe('SELECT * FROM users')
+	})
+})
