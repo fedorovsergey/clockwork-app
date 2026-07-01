@@ -1,3 +1,4 @@
+import { format as formatDate } from 'date-fns'
 import { reactive, shallowReactive } from 'vue'
 import { vi } from 'vitest'
 
@@ -23,6 +24,7 @@ export function createMockSettings(overrides = {}) {
 			hideQueueJobTypeRequests: false,
 			hideTestTypeRequests: false,
 			ignorePaths: [],
+			hiddenLoggers: [],
 			...(overrides.global || {})
 		},
 		site: {
@@ -93,6 +95,7 @@ export function createMockGlobal(overrides = {}) {
 			? overrides.$request
 			: createRequest(httpRequest),
 		$round: (value, precision = 0) => parseFloat(parseFloat(value).toFixed(precision)),
+		$date: (input, format) => formatDate(input, format),
 		activeDetailsTab: overrides.activeDetailsTab || 'performance',
 		showIncomingRequests: overrides.showIncomingRequests !== undefined
 			? overrides.showIncomingRequests

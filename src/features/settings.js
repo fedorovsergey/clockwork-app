@@ -93,6 +93,7 @@ export class Settings
 					asserts: false
 				},
 				ignorePaths: [],
+				hiddenLoggers: [],
 				seenReleaseNotesVersion: null,
 				shareTermsAccepted: false,
 				timelineCondensed: { performance: true, views: false },

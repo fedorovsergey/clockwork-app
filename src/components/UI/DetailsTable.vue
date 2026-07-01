@@ -17,6 +17,8 @@
 			</slot>
 		</div>
 
+		<slot name="after-header"></slot>
+
 		<div class="table-content">
 			<table>
 				<thead>

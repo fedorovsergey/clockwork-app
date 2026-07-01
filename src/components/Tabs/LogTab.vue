@@ -1,11 +1,34 @@
 <template>
 	<div v-if="active">
 		<details-table title="Messages" icon="edit-2" :columns="columns" :items="log" :filter="filter" filter-example="query failed level:error file:Controller.php time:>13:08:29">
+			<template v-slot:toolbar="{ filter }">
+				<div class="header-group">
+					<div class="header-search" v-if="filter">
+						<input type="search" v-model="filter.input" placeholder="Search...">
+						<icon name="search"></icon>
+					</div>
+				</div>
+			</template>
+			<template v-slot:after-header>
+				<div class="log-hidden-loggers" v-if="hiddenLoggers.length">
+					<span class="log-hidden-logger-pill" v-for="logger in hiddenLoggers" :key="logger">
+						{{logger}}
+						<a href="#" class="log-hidden-logger-remove" @click.prevent="unhideLogger(logger)" title="Show">
+							<icon name="x"></icon>
+						</a>
+					</span>
+				</div>
+			</template>
 			<template v-slot:body="{ items }">
 				<tr v-for="message, index in items" :class="{ 'log-row': true, 'error': ['emergency', 'alert', 'critical', 'error'].includes(message.level), warning: message.level == 'warning' }" :key="`${$request.id}-${index}`">
 					<td class="log-date">{{$date(message.time, 'HH:mm:ss')}}</td>
 					<td class="log-level">{{message.level}}</td>
-					<td class="log-logger" v-if="columns.includes('Logger')">{{message.context?.logger_name || ''}}</td>
+					<td class="log-logger" v-if="columns.includes('Logger')">
+						<span v-if="message.context?.logger_name">
+							{{message.context.logger_name}}
+							<a href="#" class="log-logger-hide" @click.prevent="hideLogger(message.context.logger_name)" title="Hide">✕</a>
+						</span>
+					</td>
 					<td>
 						<div class="log-message">
 							<div class="log-message-content">
@@ -47,7 +70,18 @@ export default {
 		], item => item.message)
 	}),
 	computed: {
-		log() { return this.$request.log.filter(message => ! message.context?.performance) },
+		hiddenLoggers() {
+			return this.$settings.global.hiddenLoggers || []
+		},
+		log() {
+			let messages = this.$request.log.filter(message => ! message.context?.performance)
+
+			if (this.hiddenLoggers.length) {
+				messages = messages.filter(message => ! this.hiddenLoggers.includes(message.context?.logger_name))
+			}
+
+			return messages
+		},
 		columns() {
 			let columns = ['Time', 'Level', 'Message']
 			let hasLoggerName = this.$request.log.some(message => message.context?.logger_name)
@@ -56,6 +90,19 @@ export default {
 		}
 	},
 	methods: {
+		hideLogger(name) {
+			if (! this.$settings.global.hiddenLoggers.includes(name)) {
+				this.$settings.global.hiddenLoggers.push(name)
+				this.$settings.save()
+			}
+		},
+		unhideLogger(name) {
+			let index = this.$settings.global.hiddenLoggers.indexOf(name)
+			if (index !== -1) {
+				this.$settings.global.hiddenLoggers.splice(index, 1)
+				this.$settings.save()
+			}
+		},
 		showPreviousException(message) {
 			let messageIndex = this.$request.log.indexOf(message)
 
@@ -134,6 +181,66 @@ export default {
 
 	.log-date, .log-level, .log-logger {
 		width: 70px;
+	}
+
+	.log-logger {
+		white-space: nowrap;
+
+		.log-logger-hide {
+			color: #ccc;
+			margin-left: 3px;
+			text-decoration: none;
+			visibility: hidden;
+
+			@include dark {
+				color: #555;
+			}
+		}
+	}
+
+	.log-row:hover .log-logger-hide {
+		visibility: visible;
+	}
+
+	.log-hidden-loggers {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		padding: 4px 12px 8px;
+	}
+
+	.log-hidden-logger-pill {
+		align-items: center;
+		background: #e8e8e8;
+		border-radius: 3px;
+		display: inline-flex;
+		font-family: monospace;
+		font-size: 12px;
+		padding: 2px 6px;
+
+		@include dark {
+			background: #3a3a3a;
+		}
+	}
+
+	.log-hidden-logger-remove {
+		color: #999;
+		flex-shrink: 0;
+		margin-left: 4px;
+		padding: 1px;
+		text-decoration: none;
+
+		&:hover {
+			color: #c51f24;
+		}
+
+		@include dark {
+			color: #666;
+
+			&:hover {
+				color: #ed797a;
+			}
+		}
 	}
 
 	.log-message {
